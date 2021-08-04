@@ -2,18 +2,19 @@ import subprocess
 import json
 import flask
 from flask import request
-from flask_admin import BaseView, expose
+from flask_appbuilder import expose, BaseView as AppBuilderBaseView
 
 
-class Backfill(BaseView):
+class Backfill(AppBuilderBaseView):
 
     @expose('/')
-    def base(self):
+    def list(self):
         output = subprocess.check_output(
-            'airflow list_dags', shell=True).split()
-        dags = output[(output.index(b'DAGS') + 2):]
-        return self.render("backfill_page.html",
-                           dags=[dag.decode('utf8') for dag in dags])
+            'airflow dags list -o json', shell=True)
+        json_output = json.loads(output)
+        dags = [item["dag_id"] for item in json_output if item["paused"] is not None]
+        return self.render_template("backfill_page.html",
+                           dags=dags)
 
     @expose('/backfill')
     def run_backfill(self):
@@ -28,8 +29,8 @@ class Backfill(BaseView):
 
     def _get_backfill_command(self, dag_name, task_name, start_date, end_date):
         if task_name:
-            return 'yes | airflow backfill --reset_dagruns --rerun_failed_tasks -x -i -s {} -e {} -t "{}" {}'.format(
+            return 'yes | airflow dags backfill --reset-dagruns --rerun-failed-tasks -x -i -s "{}" -e "{}" -t "{}" {}'.format(
                 start_date, end_date, task_name, dag_name)
         else:
-            return 'yes | airflow backfill --reset_dagruns --rerun_failed_tasks -x -s {} -e {} {}'.format(
+            return 'yes | airflow dags backfill --reset-dagruns --rerun-failed-tasks -x -s "{}" -e "{}" {}'.format(
                 start_date, end_date, dag_name)

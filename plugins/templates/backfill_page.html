@@ -1,4 +1,4 @@
-{% extends "airflow/master.html" %}
+{% extends "airflow/main.html" %}
 {% block title %}Airflow - Backfill Utility{% endblock %}
 {% block head_css %}
     {{ super() }}
@@ -29,11 +29,9 @@
             <div class="row form-inline">
                 <div class="form-group">
                     <input type="text" name="start_date" class="form-control" id="start_date" required="true" placeholder="Start date">
-                    <script>$('#start_date').datepicker({uiLibrary: 'bootstrap'}); </script>
                 </div>
                 <div class="form-group">
                     <input type="text" name="end_date" class="form-control" id="end_date" required="true" placeholder="End date">
-                    <script>$('#end_date').datepicker({uiLibrary: 'bootstrap'}); </script>
                 </div>      
             </div>
             <div class="row">
@@ -48,6 +46,8 @@
 {% block tail %}
     {{ super() }}
     <script>
+        $('#start_date').datetimepicker({ format: 'YYYY-MM-DD HH:mm' });
+        $('#end_date').datetimepicker({ format: 'YYYY-MM-DD HH:mm' });
         $( document ).ready( function(){
 
             var background_success_message = '<div class="alert alert-success alert-dismissible">'+
@@ -63,12 +63,12 @@
             var get_query_string = function(){
                 return "?dag_name=" + $("#dag_name").val() +
                         "&task_name=" + $("#task_name").val() +
-                        "&start_date=" + moment($("#start_date").val()).format('YYYY-MM-DD') +
-                        "&end_date=" + moment($("#end_date").val()).format('YYYY-MM-DD');
+                        "&start_date=" + moment($("#start_date").val()).format('YYYY-MM-DDTHH:mm') +
+                        "&end_date=" + moment($("#end_date").val()).add(1, 'days').format('YYYY-MM-DDTHH:mm');
             }
 
             var get_url = function(){
-                return '/admin/backfill/backfill'
+                return '/backfill/backfill'
             }
 
             $("#form").submit(function(event){
